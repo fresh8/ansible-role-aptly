@@ -26,11 +26,17 @@
 - name: copy gpg key-gen batch file
   template:
     src: gpg2_gen_key.j2
+    owner: "{{ aptly_user }}"
     dest: "{{ aptly_gpg_key_dir }}/gpg2_gen_key"
     mode: 0644
 
 - name: create key
   command: gpg --batch --gen-key {{ aptly_gpg_key_dir }}/gpg2_gen_key creates={{ aptly_gpg_key_dir }}/key.sec
+
+- name: chown key to user
+  file: 
+    name: "{{ aptly_gpg_key_dir }}/key.sec"
+    owner: "{{ aptly_user }}"
 
 - name: stop random source
   service:
@@ -45,11 +51,37 @@
   command: gpg2 --import {{ aptly_gpg_key_dir }}/key.sec
   ignore_errors: yes
 
-# end key creation tasks
+- name: delete old .gnupg
+  when: aptly_user != "root"
+  file: 
+    name: "{{ aptly_gpg_key_dir }}/.gnupg"
+    state: absent
 
-# CLI conflict - https://github.com/smira/aptly/issues/234
-- name: start aptly API (will conflict with command line until stopped)
-  command: sh -c "nohup aptly api serve 2>&1 >/dev/null &"
+- name: move .gnupg to aptly user
+  when: aptly_user != "root"
+  command: "mv /root/.gnupg {{ aptly_gpg_key_dir }}"
+  ignore_errors: yes
+
+- name: chown .gnupg to aptly user
+  when: aptly_user != "root"
+  file: 
+    name: "{{ aptly_gpg_key_dir }}/.gnupg"
+    recurse: yes
+    owner: "{{ aptly_user }}"
+
+# end key creation tasks
+- name: create upstart config
+  template: 
+    src: aptly-upstart.conf.j2
+    dest: /etc/init/aptly.conf
+
+- name: create aptly config
+  template: 
+    src: aptly.conf.j2
+    dest: /etc/aptly.conf
+
+- name: restart aptly
+  service: name=aptly state=restarted
 
 - name: create repositories
   command: >

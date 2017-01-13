@@ -11,3 +11,9 @@ aptly_repositories:
   comment: test packages
   default_distribution: trusty
   default_component: main
+
+aptly_upstart_user: root
+aptly_upstart_group: root
+
+aptly_root_dir: /root/.aptly
+aptly_user: root
