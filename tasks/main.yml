@@ -54,7 +54,7 @@
 - name: create repositories
   command: >
     curl -X POST -H 'Content-Type: application/json' --data '{"name": "{{ item.name }}", "comment": "{{ item.comment }}", "DefaultDistribution": "{{ item.default_distribution }}", "DefaultComponent": "{{ item.default_component }}" }' http://localhost:8080/api/repos
-  with_items: aptly_repositories
+  with_items: "{{ aptly_repositories }}"
   when: aptly_repositories is defined
 
 - include: test.yml
