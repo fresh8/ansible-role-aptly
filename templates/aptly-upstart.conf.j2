@@ -9,4 +9,4 @@ setuid {{ aptly_upstart_user }}
 setgid {{ aptly_upstart_group }}
 console log # log stdout/stderr to /var/log/upstart/
 
-exec /usr/bin/aptly api serve
+exec /usr/bin/aptly api serve -no-lock
